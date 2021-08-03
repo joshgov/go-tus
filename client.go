@@ -1,11 +1,8 @@
 package tus
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	netUrl "net/url"
 	"strconv"
@@ -40,27 +37,30 @@ func NewClient(url string, config *Config) (*Client, error) {
 		config.Header = make(http.Header)
 	}
 
-	if config.HttpClient == nil {
-		cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
-		if err != nil {
-			log.Fatal(err)
-		}
-		// Create a CA certificate pool and add cert.pem to it
-		caCert, err := ioutil.ReadFile("cert.pem")
-		if err != nil {
-			log.Fatal(err)
-		}
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+	// if config.HttpClient == nil {
+	// 	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	// Create a CA certificate pool and add cert.pem to it
+	// 	caCert, err := ioutil.ReadFile("cert.pem")
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	caCertPool := x509.NewCertPool()
+	// 	caCertPool.AppendCertsFromPEM(caCert)
 
-		config.HttpClient = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					RootCAs:      caCertPool,
-					Certificates: []tls.Certificate{cert},
-				},
-			},
-		}
+	// 	config.HttpClient = &http.Client{
+	// 		Transport: &http.Transport{
+	// 			TLSClientConfig: &tls.Config{
+	// 				RootCAs:      caCertPool,
+	// 				Certificates: []tls.Certificate{cert},
+	// 			},
+	// 		},
+	// 	}
+	// }
+	if config.HttpClient == nil {
+		config.HttpClient = &http.Client{}
 	}
 
 	return &Client{
