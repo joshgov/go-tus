@@ -1,8 +1,13 @@
 package tus
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	netUrl "net/url"
 	"strconv"
@@ -10,6 +15,12 @@ import (
 
 const (
 	ProtocolVersion = "1.0.0"
+)
+
+var (
+	certFile = flag.String("cert", "./tls/client.crt", "A PEM eoncoded certificate file.")
+	keyFile  = flag.String("key", "./tls/client.key", "A PEM encoded private key file.")
+	caFile   = flag.String("CA", "./tls/myCA.pem", "A PEM eoncoded CA's certificate file.")
 )
 
 // Client represents the tus client.
@@ -25,8 +36,10 @@ type Client struct {
 
 // NewClient creates a new tus client.
 func NewClient(url string, config *Config) (*Client, error) {
+	fmt.Println("Config: ", config)
 	if config == nil {
 		config = DefaultConfig()
+		fmt.Println(config)
 	} else {
 		if err := config.Validate(); err != nil {
 			return nil, err
@@ -37,30 +50,36 @@ func NewClient(url string, config *Config) (*Client, error) {
 		config.Header = make(http.Header)
 	}
 
-	// if config.HttpClient == nil {
-	// 	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	// Create a CA certificate pool and add cert.pem to it
-	// 	caCert, err := ioutil.ReadFile("cert.pem")
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	caCertPool := x509.NewCertPool()
-	// 	caCertPool.AppendCertsFromPEM(caCert)
-
-	// 	config.HttpClient = &http.Client{
-	// 		Transport: &http.Transport{
-	// 			TLSClientConfig: &tls.Config{
-	// 				RootCAs:      caCertPool,
-	// 				Certificates: []tls.Certificate{cert},
-	// 			},
-	// 		},
-	// 	}
-	// }
 	if config.HttpClient == nil {
-		config.HttpClient = &http.Client{}
+		flag.Parse()
+
+		// Load client cert
+		cert, err := tls.LoadX509KeyPair(*certFile, *keyFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Load CA cert
+		caCert, err := ioutil.ReadFile(*caFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if caCert == nil {
+			fmt.Println("nil caCert")
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		// Setup HTTPS client
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      caCertPool,
+		}
+		tlsConfig.BuildNameToCertificate()
+		transport := &http.Transport{TLSClientConfig: tlsConfig}
+		// client := &http.Client{Transport: transport}
+		config.HttpClient = &http.Client{Transport: transport}
+
 	}
 
 	return &Client{

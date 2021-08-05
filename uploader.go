@@ -2,6 +2,7 @@ package tus
 
 import (
 	"bytes"
+	"fmt"
 )
 
 type Uploader struct {
@@ -42,6 +43,7 @@ func (u *Uploader) Offset() int64 {
 
 // Upload uploads the entire body to the server.
 func (u *Uploader) Upload() error {
+	fmt.Println(u)
 	for u.offset < u.upload.size && !u.aborted {
 		err := u.UploadChunck()
 
