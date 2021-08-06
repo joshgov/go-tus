@@ -18,9 +18,9 @@ const (
 )
 
 var (
-	certFile = flag.String("cert", "./tls/client.crt", "A PEM eoncoded certificate file.")
-	keyFile  = flag.String("key", "./tls/client.key", "A PEM encoded private key file.")
-	caFile   = flag.String("CA", "./tls/myCA.pem", "A PEM eoncoded CA's certificate file.")
+	certFile = flag.String("cert", "./tls/tus-client.internal.crt", "A PEM eoncoded certificate file.")
+	keyFile  = flag.String("key", "./tls/tus-client.internal.key", "A PEM encoded private key file.")
+	caFile   = flag.String("CA", "./tls/root_ca.crt", "A PEM eoncoded CA's certificate file.")
 )
 
 // Client represents the tus client.
